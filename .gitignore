@@ -15,6 +15,9 @@ venv/
 .uv/
 # Note: uv.lock is intentionally NOT ignored — commit it for reproducible installs
 
+#outputs
+/output
+
 # Playwright
 test-results/
 playwright-report/

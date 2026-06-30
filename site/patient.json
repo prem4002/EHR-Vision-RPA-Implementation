@@ -1,0 +1,8 @@
+{
+  "patient_name": "Jane A. Doe",
+  "dob": "01/15/1990",
+  "sex": "F",
+  "insurance_id": "INS-77234901",
+  "address": "412 Maple Street, Springfield, IL 62704",
+  "phone": "555-201-3344"
+}

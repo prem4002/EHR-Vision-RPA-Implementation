@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dummy EHR Intake Form — v2 (Relayouted)</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #1e293b; padding: 40px; }
+  .form-box {
+    background: #fff; max-width: 620px; margin: auto; padding: 30px;
+    border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  h2 { margin-top: 0; color: #0f172a; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+  .full-row { grid-column: 1 / -1; }
+  label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: #334155; }
+  input, select { width: 100%; padding: 9px; font-size: 14px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; }
+  button { margin-top: 24px; padding: 11px 24px; background: #0f172a; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div class="form-box">
+    <h2>Patient Intake — Updated Form</h2>
+
+    <div class="grid">
+
+      <!-- field order intentionally scrambled vs v1, and every id/name
+           attribute renamed, to simulate a vendor relayout/refactor.
+           Visible label TEXT is the only thing kept identical to v1 —
+           that's deliberate: it's the one thing the vision+label-mapping
+           approach actually relies on. -->
+
+      <div class="full-row">
+        <label for="contact_phone_box">Phone Number</label>
+        <input type="text" id="contact_phone_box" name="contact_phone_box">
+      </div>
+
+      <div>
+        <label for="addr_line_input">Address</label>
+        <input type="text" id="addr_line_input" name="addr_line_input">
+      </div>
+
+      <div>
+        <label for="ins_code_field">Insurance ID</label>
+        <input type="text" id="ins_code_field" name="ins_code_field">
+      </div>
+
+      <div>
+        <label for="gender_select_box">Sex</label>
+        <select id="gender_select_box" name="gender_select_box">
+          <option value="">-- Select --</option>
+          <option value="M">Male</option>
+          <option value="F">Female</option>
+          <option value="O">Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="birth_date_box">Date of Birth</label>
+        <input type="text" id="birth_date_box" name="birth_date_box" placeholder="MM/DD/YYYY">
+      </div>
+
+      <div class="full-row">
+        <label for="full_name_box">Patient Name</label>
+        <input type="text" id="full_name_box" name="full_name_box">
+      </div>
+
+    </div>
+
+    <button id="submit_action_btn" type="button">Save</button>
+  </div>
+</body>
+</html>
