@@ -12,14 +12,12 @@ from pathlib import Path
 
 from PIL import Image, ImageChops
 
-BEFORE_PATH = Path(__file__).parent / "output" / "screenshot.png"
-AFTER_PATH = Path(__file__).parent / "output" / "screenshot_filled.png"
-DIFF_PATH = Path(__file__).parent / "output" / "screenshot_difference.png"
+ROOT = Path(__file__).parent.parent
 
 
-def main():
-    before = Image.open(BEFORE_PATH).convert("RGB")
-    after = Image.open(AFTER_PATH).convert("RGB")
+def _difference_calc(before_path, after_path, diff_path):
+    before = Image.open(before_path).convert("RGB")
+    after = Image.open(after_path).convert("RGB")
 
     if before.size != after.size:
         raise RuntimeError(f"Size mismatch: before={before.size} after={after.size}")
@@ -38,9 +36,14 @@ def main():
     # Save an amplified diff image — small pixel differences (e.g. text)
     # are easy to miss at normal brightness, so we boost it for visibility.
     amplified = diff.point(lambda p: min(255, p * 4))
-    amplified.save(DIFF_PATH)
-    print(f"Diff image saved to {DIFF_PATH}")
+    amplified.save(diff_path)
+    print(f"Diff image saved to {diff_path}")
 
+def run(form="v1"):
+    before_path = ROOT / "output" / f"screenshot_{form}.png"
+    after_path = ROOT / "output" / f"screenshot_filled_{form}.png"
+    diff_path = ROOT / "output" / f"screenshot_difference_{form}.png"
+    _difference_calc(before_path, after_path, diff_path)
 
 if __name__ == "__main__":
-    main()
+    run()

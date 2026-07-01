@@ -13,14 +13,12 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-SCREENSHOT_PATH = Path(__file__).parent / "output" / "screenshot_v2.png"
-DETECTIONS_PATH = Path(__file__).parent / "output" / "detections_v2.json"
-OUTPUT_PATH = Path(__file__).parent / "output" / "annotated_detections_v2.png"
+ROOT = Path(__file__).parent.parent
 
 
-def main():
-    detections = json.loads(DETECTIONS_PATH.read_text())
-    img = Image.open(SCREENSHOT_PATH).convert("RGB")
+def _visualise(screenshot_path, detection_path, output_path):
+    detections = json.loads(detection_path.read_text())
+    img = Image.open(screenshot_path).convert("RGB")
     draw = ImageDraw.Draw(img)
 
     for d in detections:
@@ -32,9 +30,14 @@ def main():
         draw.rectangle([x, y, x + w, y + h], outline=color, width=3)
         draw.text((x, max(0, y - 14)), f"{d.get('label', '?')} ({conf:.2f})", fill=color)
 
-    img.save(OUTPUT_PATH)
-    print(f"Annotated image saved to {OUTPUT_PATH}")
+    img.save(output_path)
+    print(f"Annotated image saved to {output_path}")
 
+def run(form="v1"):
+    screenshot_path = ROOT / "output" / f"screenshot_{form}.png"
+    detection_path = ROOT / "output" / f"detection_{form}.json"
+    output_path = ROOT / "output" / f"annotated_detection_{form}.png"
+    _visualise(screenshot_path, detection_path, output_path)
 
 if __name__ == "__main__":
-    main()
+    run()

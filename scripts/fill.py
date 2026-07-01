@@ -1,17 +1,15 @@
 """
-Day 3 — map the synthetic patient record onto detected fields and fill the
+map the synthetic patient record onto detected fields and fill the
 live form via Playwright. Uses two-threshold confidence gating (Section 6.2
-style): high confidence -> auto-fill, mid confidence -> ask a human at the
-console, low confidence -> discard.
+style) high confidence -> auto-fill, mid confidence -> ask a human at the
+console, low confidence -> discard
 
-Coordinates from vision are imprecise by nature (see conversation re: vision
-LLM bbox accuracy) — rather than trusting the box itself, we use its center
-point only to ask the browser "what real DOM element lives here?" (Section
-9.2's vision-locates / DOM-executes pattern). This absorbs a lot of the
+Coordinates from vision are imprecise by nature — rather than trusting the box itself, we use its center
+point only to ask the browser "what DOM element is here?" (Section
+9.2's vision-locates / DOM-executes pattern in the doc). This absorbs a lot of the
 sloppiness in the boxes for free.
 
-Run with: uv run python fill.py
-(uses the existing detections.json from Day 2 — no new API call needed)
+run with: uv run python fill.py
 """
 
 import asyncio
@@ -21,10 +19,12 @@ from pathlib import Path
 
 from playwright.async_api import async_playwright
 
-FORM_PATH = Path(__file__).parent / "site" / "intake_form.html"
-DETECTIONS_PATH = Path(__file__).parent / "output" / "detections.json"
-PATIENT_PATH = Path(__file__).parent / "site" / "patient.json"
-RESULT_SCREENSHOT = Path(__file__).parent / "output" / "screenshot_filled.png"
+ROOT = Path(__file__).parent.parent
+FORMS = {
+    "v1": ROOT / "site" / "intake_form_v1.html",
+    "v2": ROOT / "site" / "intake_form_v2.html",
+}
+PATIENT_PATH = ROOT / "data" / "patient.json"
 
 ACT_THRESHOLD = 0.85
 REVIEW_THRESHOLD = 0.5
@@ -106,10 +106,10 @@ async def read_field_value(page, detection):
     return await element.evaluate("el => el.value")
 
 
-async def main():
+async def _fill(form_path, detection_path, screenshot_path):
     patient = json.loads(PATIENT_PATH.read_text())
-    detections = json.loads(DETECTIONS_PATH.read_text())
-    form_url = f"file://{FORM_PATH.resolve()}"
+    detections = json.loads(detection_path.read_text())
+    form_url = f"file://{form_path.resolve()}"
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -206,11 +206,16 @@ async def main():
         else:
             print("\nNo Save button detected at all — skipping submit step")
 
-        await page.screenshot(path=str(RESULT_SCREENSHOT))
-        print(f"\nFinal screenshot saved to {RESULT_SCREENSHOT}")
+        await page.screenshot(path=str(screenshot_path))
+        print(f"\nFinal screenshot saved to {screenshot_path}")
 
         await browser.close()
 
+def run(form="v1"):
+    form_path = FORMS[form]
+    screenshot_path = ROOT / "output" / f"screenshot_filled_{form}.png"
+    detection_path = ROOT / "output" / f"detection_{form}.json"
+    asyncio.run(_fill(form_path, detection_path, screenshot_path))
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    run()

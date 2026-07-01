@@ -10,11 +10,14 @@ from pathlib import Path
 
 from playwright.async_api import async_playwright
 
-FORM_PATH = Path(__file__).parent / "site" / "intake_form.html"
-OUTPUT_PATH = Path(__file__).parent / "output" / "screenshot.png"
+ROOT = Path(__file__).parent.parent
+FORMS = {
+    "v1": ROOT / "site" / "intake_form_v1.html",
+    "v2": ROOT / "site" / "intake_form_v2.html",
+}
 
-async def main():
-    form_url = f"file://{FORM_PATH.resolve()}"
+async def _capture(form_path, output_path):
+    form_url = f"file://{form_path.resolve()}"
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -23,10 +26,15 @@ async def main():
         await page.goto(form_url)
         await page.wait_for_load_state("networkidle")
 
-        await page.screenshot(path=str(OUTPUT_PATH))
-        print(f"Screenshot saved to: {OUTPUT_PATH}")
+        await page.screenshot(path=str(output_path))
+        print(f"Screenshot saved to: {output_path}")
 
         await browser.close()
 
+def run(form="v1"):
+    form_path = FORMS[form]
+    output_path = ROOT / "output" / f"screenshot_{form}.png"
+    asyncio.run(_capture(form_path, output_path))
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    run()

@@ -15,8 +15,7 @@ from groq import Groq
 
 load_dotenv()
 
-SCREENSHOT_PATH = Path(__file__).parent / "output" / "screenshot.png"
-OUTPUT_PATH = Path(__file__).parent / "output" / "detections.json"
+ROOT = Path(__file__).parent.parent
 
 IMG_WIDTH, IMG_HEIGHT = 1280, 800  # must match the viewport used in screenshot.py
 
@@ -59,16 +58,16 @@ def strip_code_fences(text: str) -> str:
     return text.strip()
 
 
-def main():
+def _detect(screenshot_path, output_path):
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         raise RuntimeError("GROQ_API_KEY not found — check your .env file")
 
-    if not SCREENSHOT_PATH.exists():
-        raise RuntimeError(f"No screenshot found at {SCREENSHOT_PATH} — run day1_screenshot.py first")
+    if not screenshot_path.exists():
+        raise RuntimeError(f"No screenshot found at {screenshot_path} — run day1_screenshot.py first")
 
     client = Groq(api_key=api_key)
-    image_b64 = encode_image(SCREENSHOT_PATH)
+    image_b64 = encode_image(screenshot_path)
 
     response = client.chat.completions.create(
         model=MODEL,
@@ -95,13 +94,17 @@ def main():
         print(raw_text)
         raise RuntimeError(f"Model did not return valid JSON: {e}")
 
-    OUTPUT_PATH.write_text(json.dumps(detections, indent=2))
-    print(f"Saved {len(detections)} detections to {OUTPUT_PATH}\n")
+    output_path.write_text(json.dumps(detections, indent=2))
+    print(f"Saved {len(detections)} detections to {output_path}\n")
 
     for d in detections:
         conf = d.get("confidence", 0.0) or 0.0
         print(f"  [{conf:.2f}] {d.get('type', '?'):12s} '{d.get('label', '?')}'  bbox={d.get('bbox')}")
 
+def run(form="v1"):
+    screenshot_path = ROOT / "output" / f"screenshot_{form}.png"
+    output_path = ROOT / "output" / f"detection_{form}.json"
+    _detect(screenshot_path, output_path)
 
 if __name__ == "__main__":
-    main()
+    run()
