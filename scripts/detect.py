@@ -2,7 +2,7 @@
 send screenshot to vision model and get back field detections
 (label, type, bounding box, confidence)
 
-run with: uv run python day2_detect.py
+run with: uv run python detect.py
 """
 
 import base64

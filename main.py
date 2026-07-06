@@ -18,14 +18,19 @@ def main():
     form_path = FORMS[args.form]
     print(f"\n=== Running pipeline on {form_path} ===\n")
 
-    screenshot(form=args.form)
-    detect(form=args.form)
+    try:
+        screenshot(form=args.form)
+        detect(form=args.form)
 
-    if args.visualise:
-        from utils.visualise_detections import run as visualise
-        visualise(form=args.form)
+        if args.visualise:
+            from utils.visualise_detections import run as visualise
+            visualise(form=args.form)
 
-    fill(form=args.form)
+        fill(form=args.form)
+
+    except Exception as e:
+        print(f"\nPipeline halted: {e}")
+        raise SystemExit(1)
 
     if args.diff:
         from utils.difference import run as diff

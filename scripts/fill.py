@@ -33,6 +33,8 @@ REVIEW_THRESHOLD = 0.5
 # this form. Checked first because it's free and certain (Section 10.1's
 # "rule-based mapping checked first, AI fallback second" pattern) — fuzzy
 # matching only kicks in for anything a label doesn't match exactly.
+# This is hard coded data which is for the PoC, it will be changed with fuzzy 
+# logic later on
 LABEL_RULES = {
     "patient_name": "Patient Name",
     "dob": "Date of Birth",
@@ -42,7 +44,7 @@ LABEL_RULES = {
     "phone": "Phone Number",
 }
 
-
+#Here label is assumed to have the attribute's name
 def find_detection_by_label(detections, target_label):
     for d in detections:
         if d.get("label", "").strip().lower() == target_label.strip().lower():
@@ -62,7 +64,7 @@ async def get_element_at_point(page, x, y):
     handle = await page.evaluate_handle("([x, y]) => document.elementFromPoint(x, y)", [x, y])
     return handle.as_element()
 
-
+# for get element_at_point to get the box position
 def bbox_center(detection):
     box = detection.get("bbox") or {}
     cx = box.get("x", 0) + box.get("w", 0) / 2
@@ -78,6 +80,31 @@ async def fill_field(page, detection, value):
         return False
 
     tag = await element.evaluate("el => el.tagName.toLowerCase()")
+
+    # elementFromPoint can land on a <label> or a <div> wrapper instead of
+    # the actual input — especially when the vision model's bbox center sits
+    # slightly high and hits the label above the field. Resolve upward:
+    # 1. label with a 'for' attr  → getElementById(for) is the exact input
+    # 2. anything else non-fillable → search the nearest container for an input
+    if tag not in ("input", "select", "textarea"):
+        element = (await page.evaluate_handle(
+            """([x, y]) => {
+                const el = document.elementFromPoint(x, y);
+                if (el.tagName.toLowerCase() === 'label' && el.htmlFor) {
+                    return document.getElementById(el.htmlFor);
+                }
+                const container = el.closest('div, form, fieldset') || el.parentElement;
+                return container ? container.querySelector('input, select, textarea') : null;
+            }""",
+            [cx, cy],
+        )).as_element()
+
+        if element is None:
+            print(f"    !! Could not resolve to a fillable element at ({cx:.0f},{cy:.0f}) — skipping")
+            return False
+
+        tag = await element.evaluate("el => el.tagName.toLowerCase()")
+
     if tag == "select":
         try:
             await element.select_option(value=str(value))
@@ -119,11 +146,13 @@ async def _fill(form_path, detection_path, screenshot_path):
 
         for key, value in patient.items():
             target_label = LABEL_RULES.get(key)
+            #debug
             if not target_label:
                 print(f"[skip] '{key}' has no mapping rule — full system would fall back to AI semantic match here")
                 continue
 
             detection, map_confidence = find_detection_by_label(detections, target_label)
+            #debug
             if detection is None:
                 print(f"[escalate] '{key}' -> no detection found for label '{target_label}'")
                 continue
@@ -135,6 +164,7 @@ async def _fill(form_path, detection_path, screenshot_path):
 
             if combined_confidence >= ACT_THRESHOLD:
                 ok = await fill_field(page, detection, value)
+                #debug
                 print("  auto-filled" if ok else "  fill failed")
 
             elif combined_confidence >= REVIEW_THRESHOLD:
