@@ -32,3 +32,8 @@ screenshot_*.png
 .DS_Store
 .vscode/
 .idea/
+
+# Documents
+/docs
+*.pdf
+*.docx
